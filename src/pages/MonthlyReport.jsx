@@ -3,12 +3,13 @@ import { getRecentMonthsList, getHindiMonthName, getMonthlyStatus, getMonthlySum
 import { exportMonthlyReportToPDF } from '../utils/pdfExport';
 import { FileDown, Calendar, MessageSquare, AlertCircle } from 'lucide-react';
 
-export default function MonthlyReport() {
+export default function MonthlyReport({ onRecordPayment, onSelectTenant }) {
   const [months, setMonths] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState('');
   const [monthlyStatus, setMonthlyStatus] = useState([]);
   const [summary, setSummary] = useState({});
   const [landlordNote, setLandlordNote] = useState('');
+  const [statusTab, setStatusTab] = useState('pending');
 
   useEffect(() => {
     const monthsList = getRecentMonthsList();
@@ -70,6 +71,150 @@ export default function MonthlyReport() {
           </select>
         </div>
       </div>
+
+      {/* Collection Summary & Status Lists */}
+      <div className="grid grid-cols-2 gap-4 mb-5">
+        {/* Collected Card */}
+        <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+          <div>
+            <span className="text-[10px] font-extrabold text-emerald-600 uppercase tracking-wider block mb-1">
+              Collected (कुल मिला)
+            </span>
+            <span className="text-xl font-black text-emerald-950 block">
+              ₹{(summary.totalCollected || 0).toLocaleString('en-IN')}
+            </span>
+          </div>
+          <div className="border-t border-emerald-100/50 pt-2 mt-2 text-[9px] text-emerald-700 font-bold flex flex-col gap-0.5">
+            <span>Rent: ₹{(summary.rentCollected || 0).toLocaleString('en-IN')}</span>
+            {summary.electricityCollected > 0 && (
+              <span>Bijli: ₹{(summary.electricityCollected || 0).toLocaleString('en-IN')}</span>
+            )}
+          </div>
+        </div>
+
+        {/* Pending Card */}
+        <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+          <div>
+            <span className="text-[10px] font-extrabold text-rose-600 uppercase tracking-wider block mb-1">
+              Pending (कुल बचा है)
+            </span>
+            <span className="text-xl font-black text-rose-950 block">
+              ₹{(summary.totalPending || 0).toLocaleString('en-IN')}
+            </span>
+          </div>
+          <div className="border-t border-rose-100/50 pt-2 mt-2 text-[9px] text-rose-700 font-bold flex flex-col gap-0.5">
+            <span>Rent: ₹{(summary.rentPending || 0).toLocaleString('en-IN')}</span>
+            {summary.electricityPending > 0 && (
+              <span>Bijli: ₹{(summary.electricityPending || 0).toLocaleString('en-IN')}</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Summary Lists */}
+      {monthlyStatus.length > 0 && (
+        <div className="bg-white rounded-2xl p-4 border border-stone-100 shadow-[0_2px_12px_rgba(0,0,0,0.08)] mb-5">
+          <div className="flex border-b border-stone-100 mb-3 pb-1">
+            <button
+              onClick={() => setStatusTab('pending')}
+              className={`flex-1 pb-2 text-center text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${
+                statusTab === 'pending'
+                  ? 'border-brand-primary text-brand-primary'
+                  : 'border-transparent text-stone-400'
+              }`}
+            >
+              Pending ({monthlyStatus.filter(item => item.totalPendingAmount > 0).length})
+            </button>
+            <button
+              onClick={() => setStatusTab('paid')}
+              className={`flex-1 pb-2 text-center text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${
+                statusTab === 'paid'
+                  ? 'border-brand-primary text-brand-primary'
+                  : 'border-transparent text-stone-400'
+              }`}
+            >
+              Paid ({monthlyStatus.filter(item => item.totalPendingAmount === 0).length})
+            </button>
+          </div>
+
+          {statusTab === 'pending' ? (
+            monthlyStatus.filter(item => item.totalPendingAmount > 0).length === 0 ? (
+              <div className="text-center py-4 text-xs font-semibold text-emerald-600">
+                🎉 Sab ne de diya! Koi payment pending nahi hai.
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {monthlyStatus.filter(item => item.totalPendingAmount > 0).map((item) => (
+                  <div
+                    key={item.tenant.id}
+                    className="flex justify-between items-center bg-stone-50/50 hover:bg-stone-50 border border-stone-100/50 rounded-xl p-3 transition-colors"
+                  >
+                    <div 
+                      onClick={() => onSelectTenant && onSelectTenant(item.tenant.id)}
+                      className="flex flex-col cursor-pointer group"
+                    >
+                      <span className="font-bold text-stone-850 text-sm group-hover:text-brand-primary transition-colors">
+                        {item.tenant.name}
+                      </span>
+                      <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider mt-0.5">
+                        Floor: {item.tenant.room} • Rent Due: ₹{item.rentDue}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <span className="text-xs font-extrabold text-brand-pending block">
+                          ₹{item.totalPendingAmount} pending
+                        </span>
+                        {item.electricityPending > 0 && (
+                          <span className="text-[9px] text-stone-400 block font-medium">
+                            Incl. ⚡ ₹{item.electricityPending}
+                          </span>
+                        )}
+                      </div>
+                      {onRecordPayment && (
+                        <button
+                          onClick={() => onRecordPayment(item.tenant.id, selectedMonth)}
+                          className="min-h-[36px] px-3.5 bg-orange-50 hover:bg-orange-100/80 text-brand-primary text-xs font-extrabold rounded-lg border border-orange-100 active:scale-95 transition-all cursor-pointer flex items-center justify-center"
+                        >
+                          Pay
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          ) : (
+            monthlyStatus.filter(item => item.totalPendingAmount === 0).length === 0 ? (
+              <div className="text-center py-4 text-xs font-semibold text-stone-400">
+                Kisi ne bhi abhi tak pura payment nahi diya.
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {monthlyStatus.filter(item => item.totalPendingAmount === 0).map((item) => (
+                  <div
+                    key={item.tenant.id}
+                    onClick={() => onSelectTenant && onSelectTenant(item.tenant.id)}
+                    className="flex justify-between items-center bg-stone-50/50 hover:bg-stone-50 border border-stone-100/50 rounded-xl p-3 transition-colors cursor-pointer group"
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-bold text-stone-850 text-sm group-hover:text-brand-primary transition-colors">
+                        {item.tenant.name}
+                      </span>
+                      <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider mt-0.5">
+                        Floor: {item.tenant.room} • Paid: ₹{item.amountPaid + item.electricityBill}
+                      </span>
+                    </div>
+                    <span className="text-[9px] bg-emerald-50 text-brand-success border border-emerald-100 px-2 py-1 rounded-md font-extrabold uppercase tracking-wide">
+                      Paid ✅
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )
+          )}
+        </div>
+      )}
 
       {/* Report Summary Data Table */}
       <div className="bg-white rounded-2xl border border-stone-150 shadow-[0_2px_12px_rgba(0,0,0,0.08)] overflow-hidden mb-5">
