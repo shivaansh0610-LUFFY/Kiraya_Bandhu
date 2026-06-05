@@ -22,20 +22,9 @@ export default function TenantDetail({ tenantId, onBack, onRecordPayment }) {
     );
   }
 
-  // Filter monthsList to keep only months from the tenant's joinDate up to the current system month (both inclusive)
   const now = new Date();
   const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const tenantJoinMonth = tenant.joinDate.substring(0, 7);
-  
-  const filteredMonthsList = monthsList.filter(
-    monthStr => monthStr >= tenantJoinMonth && monthStr <= currentMonthStr
-  );
-
-  // Fallback to current month if join month is in the future
-  let finalMonthsList = filteredMonthsList;
-  if (finalMonthsList.length === 0) {
-    finalMonthsList = [currentMonthStr];
-  }
 
   // Helper to format date as DD/MM/YYYY
   const formatDateToDDMMYYYY = (dateStr) => {
@@ -101,7 +90,7 @@ export default function TenantDetail({ tenantId, onBack, onRecordPayment }) {
           {tenant.phone && (
             <a
               href={`tel:${tenant.phone}`}
-              className="w-12 h-12 rounded-xl bg-orange-50 text-brand-primary flex items-center justify-center border border-orange-100 shadow-sm active:scale-95 transition-transform cursor-pointer shrink-0"
+              className="w-12 h-12 rounded-xl bg-orange-50 text-brand-primary flex items-center justify-center border border-orange-100 shadow-sm active:scale-95 transition-transform shrink-0"
               title={`Call ${tenant.name}`}
             >
               <Phone size={20} className="stroke-[2.2]" />
@@ -117,7 +106,7 @@ export default function TenantDetail({ tenantId, onBack, onRecordPayment }) {
         </h3>
         
         <div className="space-y-3 flex-1 overflow-y-visible">
-          {finalMonthsList.map((monthStr) => {
+          {monthsList.map((monthStr) => {
             const statusItem = getMonthlyStatus(monthStr).find(s => s.tenant.id === tenantId);
             
             // Default states if no data exists
@@ -139,6 +128,9 @@ export default function TenantDetail({ tenantId, onBack, onRecordPayment }) {
             const paymentDate = lastPayment ? formatDateToDDMMYYYY(lastPayment.date) : '';
             const showElectricity = electricityBill > 0;
 
+            const hasJoined = monthStr >= tenantJoinMonth;
+            const hasPayment = amountPaid > 0 || electricityBill > 0 || (statusItem && statusItem.payments && statusItem.payments.length > 0);
+
             return (
               <div
                 key={monthStr}
@@ -152,7 +144,11 @@ export default function TenantDetail({ tenantId, onBack, onRecordPayment }) {
                       {getEnglishMonthNameAndYear(monthStr)}
                     </span>
                     
-                    {status === 'paid' ? (
+                    {!hasJoined && !hasPayment ? (
+                      <span className="text-[10px] bg-stone-100 text-stone-400 border border-stone-200/60 px-2.5 py-0.5 rounded-full font-extrabold flex items-center gap-1 uppercase tracking-wider mt-1.5 w-fit">
+                        <span>NOT JOINED YET</span>
+                      </span>
+                    ) : status === 'paid' ? (
                       <span className="text-[10px] bg-green-50 border border-green-100 text-brand-success px-2.5 py-0.5 rounded-full font-extrabold flex items-center gap-1 uppercase tracking-wider mt-1.5 w-fit">
                         <span>PAID</span>
                         <CheckCircle2 size={10} className="stroke-[2.5]" />
@@ -176,8 +172,8 @@ export default function TenantDetail({ tenantId, onBack, onRecordPayment }) {
                   </div>
                 </div>
 
-                {/* Details Row (only if paid/partial) */}
-                {status !== 'unpaid' && (
+                {/* Details Row (only if paid/partial or there is an electricity bill) */}
+                {(status !== 'unpaid' || electricityBill > 0) && (
                   <div className="grid grid-cols-2 gap-4 border-t border-stone-50 pt-2 text-xs font-semibold text-stone-500">
                     {/* Rent info */}
                     <div>
