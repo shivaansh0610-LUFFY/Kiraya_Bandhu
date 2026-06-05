@@ -12,6 +12,7 @@ import { Heart, Building2 } from 'lucide-react';
 export default function App() {
   const [page, setPage] = useState('dashboard');
   const [prevPage, setPrevPage] = useState('dashboard');
+  const [paymentPrevPage, setPaymentPrevPage] = useState('dashboard');
   const [selectedTenantId, setSelectedTenantId] = useState('');
   const [tenantsCount, setTenantsCount] = useState(0);
   const [preSelectedTenantId, setPreSelectedTenantId] = useState('');
@@ -36,6 +37,7 @@ export default function App() {
   const handleRecordPaymentRedirect = (tenantId, monthStr) => {
     setPreSelectedTenantId(tenantId);
     setPreSelectedMonth(monthStr || '');
+    setPaymentPrevPage(page);
     setPage('record-payment');
   };
 
@@ -48,8 +50,15 @@ export default function App() {
   const handlePaymentRecorded = (targetPage = 'dashboard') => {
     setPreSelectedTenantId('');
     setPreSelectedMonth('');
-    setPage(targetPage);
+    setPage(paymentPrevPage === 'tenant-detail' ? 'tenant-detail' : targetPage);
     updateTenantsCount();
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage === 'record-payment') {
+      setPaymentPrevPage('dashboard');
+    }
+    setPage(newPage);
   };
 
   const handleWelcomeSubmit = (e) => {
@@ -223,6 +232,7 @@ export default function App() {
             preSelectedTenantId={preSelectedTenantId}
             preSelectedMonth={preSelectedMonth}
             onPaymentRecorded={handlePaymentRecorded}
+            onCancel={() => setPage(paymentPrevPage)}
           />
         )}
         {page === 'electricity' && (
@@ -238,6 +248,7 @@ export default function App() {
             onRecordPayment={(tenantId, targetMonth) => {
               setPreSelectedTenantId(tenantId);
               setPreSelectedMonth(targetMonth || '');
+              setPaymentPrevPage('tenant-detail');
               setPage('record-payment');
             }}
           />
@@ -245,7 +256,7 @@ export default function App() {
       </main>
 
       {/* Global Bottom Navigation */}
-      <BottomNav currentPage={page} setPage={setPage} />
+      <BottomNav currentPage={page} setPage={handlePageChange} />
     </div>
   );
 }
