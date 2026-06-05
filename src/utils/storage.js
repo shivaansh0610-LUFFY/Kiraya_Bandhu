@@ -405,3 +405,5 @@ export const getHindiMonthName = (monthStr) => {
   };
   return `${monthNames[month] || month} ${year}`;
 };
+
+// End of storage api helper file. Preserves local offline state.
