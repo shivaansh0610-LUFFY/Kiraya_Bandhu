@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getTenants, saveTenant } from './utils/storage';
 import BottomNav from './components/BottomNav';
 import Tenants from './pages/Tenants';
+import Dashboard from './pages/Dashboard';
 
 export default function App() {
   const [page, setPage] = useState('dashboard');
@@ -65,7 +66,7 @@ export default function App() {
         <h1>Kiraya Bandhu</h1>
       </header>
       <main className="flex-1 p-4 bg-[#FFF7ED]">
-        {page === 'dashboard' && <div className="text-center py-12">Dashboard View (Coming Soon)</div>}
+        {page === 'dashboard' && <Dashboard onRecordPaymentRedirect={() => setPage('record-payment')} />}
         {page === 'tenants' && <Tenants />}
       </main>
       <BottomNav currentPage={page} setPage={setPage} />
