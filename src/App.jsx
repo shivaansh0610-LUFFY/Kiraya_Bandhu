@@ -239,7 +239,19 @@ export default function App() {
           <Electricity />
         )}
         {page === 'report' && (
-          <MonthlyReport />
+          <MonthlyReport 
+            onRecordPayment={(tenantId, targetMonth) => {
+              setPreSelectedTenantId(tenantId);
+              setPreSelectedMonth(targetMonth || '');
+              setPaymentPrevPage('report');
+              setPage('record-payment');
+            }}
+            onSelectTenant={(tenantId) => {
+              setSelectedTenantId(tenantId);
+              setPrevPage('report');
+              setPage('tenant-detail');
+            }}
+          />
         )}
         {page === 'tenant-detail' && (
           <TenantDetail 
