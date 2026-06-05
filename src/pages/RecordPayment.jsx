@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { getTenants, addPayment } from '../utils/storage';
-import { DollarSign, Calendar, FileText, CheckCircle2, ChevronRight } from 'lucide-react';
+import { getTenants, addPayment, getMonthlyStatus } from '../utils/storage';
+import { DollarSign, Calendar, FileText, CheckCircle2, ChevronRight, ArrowLeft } from 'lucide-react';
 
-export default function RecordPayment({ preSelectedTenantId, preSelectedMonth, onPaymentRecorded }) {
+export default function RecordPayment({ preSelectedTenantId, preSelectedMonth, onPaymentRecorded, onCancel }) {
   const [tenants, setTenants] = useState([]);
   const [selectedTenantId, setSelectedTenantId] = useState('');
   const [amount, setAmount] = useState('');
@@ -27,9 +27,15 @@ export default function RecordPayment({ preSelectedTenantId, preSelectedMonth, o
     const today = new Date().toISOString().split('T')[0];
     const currentMonthStr = today.substring(0, 7);
 
-    // If a specific month was pre-selected on dashboard, default to its first day
-    if (preSelectedMonth && preSelectedMonth !== currentMonthStr) {
-      setDate(`${preSelectedMonth}-01`);
+    let resolvedMonth = currentMonthStr;
+    // If a specific month was pre-selected, default to its first day
+    if (preSelectedMonth) {
+      resolvedMonth = preSelectedMonth;
+      if (preSelectedMonth !== currentMonthStr) {
+        setDate(`${preSelectedMonth}-01`);
+      } else {
+        setDate(today);
+      }
     } else {
       setDate(today);
     }
@@ -39,23 +45,56 @@ export default function RecordPayment({ preSelectedTenantId, preSelectedMonth, o
       setSelectedTenantId(preSelectedTenantId);
       const tenant = activeTenants.find(t => t.id === preSelectedTenantId);
       if (tenant) {
-        setAmount(tenant.monthlyRent);
+        const statusItem = getMonthlyStatus(resolvedMonth).find(s => s.tenant.id === preSelectedTenantId);
+        let defaultAmount = tenant.monthlyRent;
+        if (statusItem && statusItem.balance > 0) {
+          defaultAmount = statusItem.balance;
+        }
+        setAmount(defaultAmount);
       }
     } else if (activeTenants.length > 0) {
       // Otherwise preselect the first tenant
       setSelectedTenantId(activeTenants[0].id);
-      setAmount(activeTenants[0].monthlyRent);
+      const tenant = activeTenants[0];
+      const statusItem = getMonthlyStatus(resolvedMonth).find(s => s.tenant.id === tenant.id);
+      let defaultAmount = tenant.monthlyRent;
+      if (statusItem && statusItem.balance > 0) {
+        defaultAmount = statusItem.balance;
+      }
+      setAmount(defaultAmount);
     }
   }, [preSelectedTenantId, preSelectedMonth]);
 
-  // When selected tenant changes, auto-update the amount to their monthly rent
+  // When selected tenant changes, auto-update the amount to their monthly rent / balance
   const handleTenantChange = (tenantId) => {
     setSelectedTenantId(tenantId);
     const tenant = tenants.find(t => t.id === tenantId);
     if (tenant) {
-      setAmount(tenant.monthlyRent);
+      const targetMonth = date ? date.substring(0, 7) : new Date().toISOString().substring(0, 7);
+      const statusItem = getMonthlyStatus(targetMonth).find(s => s.tenant.id === tenantId);
+      let defaultAmount = tenant.monthlyRent;
+      if (statusItem && statusItem.balance > 0) {
+        defaultAmount = statusItem.balance;
+      }
+      setAmount(defaultAmount);
     } else {
       setAmount('');
+    }
+  };
+
+  const handleDateChange = (newDate) => {
+    setDate(newDate);
+    if (selectedTenantId) {
+      const tenant = tenants.find(t => t.id === selectedTenantId);
+      if (tenant) {
+        const targetMonth = newDate ? newDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
+        const statusItem = getMonthlyStatus(targetMonth).find(s => s.tenant.id === selectedTenantId);
+        let defaultAmount = tenant.monthlyRent;
+        if (statusItem && statusItem.balance > 0) {
+          defaultAmount = statusItem.balance;
+        }
+        setAmount(defaultAmount);
+      }
     }
   };
 
@@ -118,10 +157,20 @@ export default function RecordPayment({ preSelectedTenantId, preSelectedMonth, o
         </div>
       )}
 
-      {/* Screen Title */}
-      <div className="mb-6 px-1">
-        <h2 className="text-xl font-bold text-stone-900">Payment Record Karo (पेमेंट दर्ज करें)</h2>
-        <p className="text-xs text-stone-500 mt-1">Tenant ki payment details yahan bharein</p>
+      {/* Header section with Back Button and Title */}
+      <div className="flex items-center gap-3 mb-6 px-1 pt-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="w-10 h-10 rounded-xl bg-white text-stone-600 flex items-center justify-center border border-stone-200/60 active:scale-90 transition-transform shadow-sm cursor-pointer"
+          aria-label="Go back"
+        >
+          <ArrowLeft size={20} className="stroke-[2.5]" />
+        </button>
+        <div>
+          <h2 className="text-xl font-bold text-stone-900 leading-none">Payment Record Karo</h2>
+          <p className="text-xs text-stone-500 mt-1">Tenant ki payment details yahan bharein</p>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-5 border border-stone-100 shadow-[0_10px_30px_rgba(28,25,23,0.03)] space-y-5">
@@ -173,7 +222,7 @@ export default function RecordPayment({ preSelectedTenantId, preSelectedMonth, o
               type="date"
               required
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(e) => handleDateChange(e.target.value)}
               className="w-full min-h-[48px] px-3.5 rounded-xl border border-stone-200 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 transition-all outline-none bg-stone-50 font-medium text-stone-800"
             />
           </div>
