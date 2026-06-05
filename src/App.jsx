@@ -4,6 +4,7 @@ import BottomNav from './components/BottomNav';
 import Tenants from './pages/Tenants';
 import Dashboard from './pages/Dashboard';
 import RecordPayment from './pages/RecordPayment';
+import Electricity from './pages/Electricity';
 
 export default function App() {
   const [page, setPage] = useState('dashboard');
@@ -93,6 +94,7 @@ export default function App() {
             onPaymentRecorded={handlePaymentRecorded}
           />
         )}
+        {page === 'electricity' && <Electricity />}
       </main>
       <BottomNav currentPage={page} setPage={setPage} />
     </div>
