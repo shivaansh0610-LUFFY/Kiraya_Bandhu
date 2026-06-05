@@ -1,6 +1,6 @@
 import React from 'react';
 import { getTenants, getRecentMonthsList, getMonthlyStatus } from '../utils/storage';
-import { ArrowLeft, Phone, Zap, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Phone, Plus, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 
 export default function TenantDetail({ tenantId, onBack, onRecordPayment }) {
   // Find tenant details (including soft-deleted ones for history view)
@@ -20,6 +20,21 @@ export default function TenantDetail({ tenantId, onBack, onRecordPayment }) {
         </button>
       </div>
     );
+  }
+
+  // Filter monthsList to keep only months from the tenant's joinDate up to the current system month (both inclusive)
+  const now = new Date();
+  const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const tenantJoinMonth = tenant.joinDate.substring(0, 7);
+  
+  const filteredMonthsList = monthsList.filter(
+    monthStr => monthStr >= tenantJoinMonth && monthStr <= currentMonthStr
+  );
+
+  // Fallback to current month if join month is in the future
+  let finalMonthsList = filteredMonthsList;
+  if (finalMonthsList.length === 0) {
+    finalMonthsList = [currentMonthStr];
   }
 
   // Helper to format date as DD/MM/YYYY
@@ -102,11 +117,10 @@ export default function TenantDetail({ tenantId, onBack, onRecordPayment }) {
         </h3>
         
         <div className="space-y-3 flex-1 overflow-y-visible">
-          {monthsList.map((monthStr) => {
-            const hasJoined = monthStr >= tenant.joinDate.substring(0, 7);
+          {finalMonthsList.map((monthStr) => {
             const statusItem = getMonthlyStatus(monthStr).find(s => s.tenant.id === tenantId);
             
-            // Default states if no data exists or before joining
+            // Default states if no data exists
             let status = 'unpaid';
             let amountPaid = 0;
             let lastPayment = null;
@@ -128,54 +142,54 @@ export default function TenantDetail({ tenantId, onBack, onRecordPayment }) {
             return (
               <div
                 key={monthStr}
-                className="bg-white border border-stone-100 rounded-2xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.08)] flex flex-col gap-2.5 transition-all"
+                onClick={() => onRecordPayment(tenantId, monthStr)}
+                className="bg-white border border-stone-100 hover:border-brand-primary/30 rounded-2xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.08)] flex flex-col gap-2.5 transition-all cursor-pointer active:scale-[0.99] group"
               >
                 {/* Month Name & Status Badge Row */}
                 <div className="flex justify-between items-center">
-                  <span className="font-bold text-stone-800 text-sm">
-                    {getEnglishMonthNameAndYear(monthStr)}
-                  </span>
-                  
-                  {!hasJoined ? (
-                    <span className="text-[10px] bg-stone-100 text-stone-400 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                      Not Joined Yet
+                  <div className="flex flex-col">
+                    <span className="font-bold text-stone-850 text-sm group-hover:text-brand-primary transition-colors">
+                      {getEnglishMonthNameAndYear(monthStr)}
                     </span>
-                  ) : status === 'paid' ? (
-                    <span className="text-[10px] bg-green-50 border border-green-100 text-brand-success px-2.5 py-0.5 rounded-full font-extrabold flex items-center gap-1 uppercase tracking-wider">
-                      <span>PAID</span>
-                      <CheckCircle2 size={10} className="stroke-[2.5]" />
-                    </span>
-                  ) : status === 'partial' ? (
-                    <span className="text-[10px] bg-orange-50 border border-orange-100 text-brand-primary px-2.5 py-0.5 rounded-full font-extrabold flex items-center gap-1 uppercase tracking-wider">
-                      <span>PARTIAL</span>
-                      <AlertCircle size={10} className="stroke-[2.5]" />
-                    </span>
-                  ) : (
-                    <span className="text-[10px] bg-red-50 border border-red-100 text-brand-pending px-2.5 py-0.5 rounded-full font-extrabold flex items-center gap-1 uppercase tracking-wider">
-                      <span>NAHI DIYA</span>
-                      <XCircle size={10} className="stroke-[2.5]" />
-                    </span>
-                  )}
+                    
+                    {status === 'paid' ? (
+                      <span className="text-[10px] bg-green-50 border border-green-100 text-brand-success px-2.5 py-0.5 rounded-full font-extrabold flex items-center gap-1 uppercase tracking-wider mt-1.5 w-fit">
+                        <span>PAID</span>
+                        <CheckCircle2 size={10} className="stroke-[2.5]" />
+                      </span>
+                    ) : status === 'partial' ? (
+                      <span className="text-[10px] bg-orange-50 border border-orange-100 text-brand-primary px-2.5 py-0.5 rounded-full font-extrabold flex items-center gap-1 uppercase tracking-wider mt-1.5 w-fit">
+                        <span>PARTIAL</span>
+                        <AlertCircle size={10} className="stroke-[2.5]" />
+                      </span>
+                    ) : (
+                      <span className="text-[10px] bg-red-50 border border-red-100 text-brand-pending px-2.5 py-0.5 rounded-full font-extrabold flex items-center gap-1 uppercase tracking-wider mt-1.5 w-fit">
+                        <span>NAHI DIYA</span>
+                        <XCircle size={10} className="stroke-[2.5]" />
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Plus icon on the right to make the row obviously tappable */}
+                  <div className="w-8 h-8 rounded-lg bg-orange-50 text-brand-primary border border-orange-100 flex items-center justify-center shrink-0 active:scale-90 transition-transform">
+                    <Plus size={16} className="stroke-[3]" />
+                  </div>
                 </div>
 
-                {/* Details Row */}
-                {hasJoined && (
+                {/* Details Row (only if paid/partial) */}
+                {status !== 'unpaid' && (
                   <div className="grid grid-cols-2 gap-4 border-t border-stone-50 pt-2 text-xs font-semibold text-stone-500">
                     {/* Rent info */}
                     <div>
                       <span className="block text-[10px] text-stone-400 uppercase tracking-wider font-bold mb-0.5">Rent Status</span>
-                      {status === 'unpaid' ? (
-                        <span className="text-brand-pending font-bold">₹0 Paid</span>
-                      ) : (
-                        <div>
-                          <span className="text-stone-850 font-bold block">₹{Number(amountPaid).toLocaleString('en-IN')} Paid</span>
-                          {paymentMode && (
-                            <span className="text-[10px] text-stone-400 font-medium block mt-0.5">
-                              {paymentMode} • {paymentDate}
-                            </span>
-                          )}
-                        </div>
-                      )}
+                      <div>
+                        <span className="text-stone-850 font-bold block">₹{Number(amountPaid).toLocaleString('en-IN')} Paid</span>
+                        {paymentMode && (
+                          <span className="text-[10px] text-stone-400 font-medium block mt-0.5">
+                            {paymentMode} • {paymentDate}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Electricity Info */}
@@ -203,7 +217,7 @@ export default function TenantDetail({ tenantId, onBack, onRecordPayment }) {
       {/* Fixed Sticky Action Button at Bottom */}
       <div className="fixed bottom-22 left-0 right-0 z-40 pointer-events-none flex justify-center px-4">
         <button
-          onClick={() => onRecordPayment(tenantId)}
+          onClick={() => onRecordPayment(tenantId, currentMonthStr)}
           className="pointer-events-auto w-full max-w-[398px] min-h-[48px] bg-brand-primary hover:bg-brand-primary/95 text-white font-extrabold rounded-xl shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform text-base pt-1 cursor-pointer"
           aria-label="Record payment for this tenant"
         >

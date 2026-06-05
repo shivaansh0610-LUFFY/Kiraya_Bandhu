@@ -235,11 +235,9 @@ export default function App() {
           <TenantDetail 
             tenantId={selectedTenantId}
             onBack={() => setPage(prevPage)}
-            onRecordPayment={(tenantId) => {
+            onRecordPayment={(tenantId, targetMonth) => {
               setPreSelectedTenantId(tenantId);
-              const now = new Date();
-              const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-              setPreSelectedMonth(currentMonthStr);
+              setPreSelectedMonth(targetMonth || '');
               setPage('record-payment');
             }}
           />
