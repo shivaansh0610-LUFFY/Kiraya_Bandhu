@@ -8,6 +8,43 @@ const generateId = () => {
   return Math.random().toString(36).substring(2, 9) + '-' + Date.now().toString(36);
 };
 
+// Clean up any payments or electricity readings of soft-deleted tenants
+const cleanupDeletedTenantsData = () => {
+  try {
+    const data = localStorage.getItem('tenants');
+    if (!data) return;
+    const tenants = JSON.parse(data);
+    const deletedTenantIds = new Set(tenants.filter(t => t.deleted).map(t => t.id));
+    
+    if (deletedTenantIds.size === 0) return;
+    
+    const paymentsData = localStorage.getItem('payments');
+    if (paymentsData) {
+      const payments = JSON.parse(paymentsData);
+      const activePayments = payments.filter(p => !deletedTenantIds.has(p.tenantId));
+      if (payments.length !== activePayments.length) {
+        localStorage.setItem('payments', JSON.stringify(activePayments));
+      }
+    }
+    
+    const readingsData = localStorage.getItem('electricityReadings');
+    if (readingsData) {
+      const readings = JSON.parse(readingsData);
+      const activeReadings = readings.filter(r => !deletedTenantIds.has(r.tenantId));
+      if (readings.length !== activeReadings.length) {
+        localStorage.setItem('electricityReadings', JSON.stringify(activeReadings));
+      }
+    }
+  } catch (e) {
+    console.error('Database cleanup error:', e);
+  }
+};
+
+// Run one-time database cleanup in browser environment
+if (typeof window !== 'undefined') {
+  cleanupDeletedTenantsData();
+}
+
 // Helper to get previous month string (YYYY-MM)
 const getPreviousMonthStr = (monthStr) => {
   const [year, month] = monthStr.split('-').map(Number);
@@ -84,6 +121,23 @@ export const deleteTenant = (id) => {
       // Soft delete: set deleted flag to true
       tenants[index].deleted = true;
       localStorage.setItem('tenants', JSON.stringify(tenants));
+      
+      // Also purge all associated payments of this deleted tenant
+      const paymentsData = localStorage.getItem('payments');
+      if (paymentsData) {
+        const payments = JSON.parse(paymentsData);
+        const activePayments = payments.filter(p => p.tenantId !== id);
+        localStorage.setItem('payments', JSON.stringify(activePayments));
+      }
+      
+      // Also purge all associated electricity readings of this deleted tenant
+      const readingsData = localStorage.getItem('electricityReadings');
+      if (readingsData) {
+        const readings = JSON.parse(readingsData);
+        const activeReadings = readings.filter(r => r.tenantId !== id);
+        localStorage.setItem('electricityReadings', JSON.stringify(activeReadings));
+      }
+      
       return true;
     }
     return false;
@@ -267,24 +321,10 @@ export const getMonthlyStatus = (monthStr) => {
   // Filter payments for this month
   const monthPayments = payments.filter(p => p.month === monthStr);
   
-  // Get active tenants, plus any soft-deleted tenant who has a payment or reading in this month
+  // Get ONLY active tenants (exclude soft-deleted ones)
   const activeTenants = allTenants.filter(t => !t.deleted);
-  const deletedTenantsWithHistory = allTenants.filter(t => 
-    t.deleted && (
-      monthPayments.some(p => p.tenantId === t.id) || 
-      electricityReadings.some(r => r.tenantId === t.id)
-    )
-  );
-  
-  // Combine them for the month's context
-  const targetTenants = [...activeTenants];
-  deletedTenantsWithHistory.forEach(dt => {
-    if (!targetTenants.some(t => t.id === dt.id)) {
-      targetTenants.push(dt);
-    }
-  });
 
-  return targetTenants.map(tenant => {
+  return activeTenants.map(tenant => {
     const tenantPayments = monthPayments.filter(p => p.tenantId === tenant.id);
     const amountPaid = tenantPayments.reduce((sum, p) => sum + p.amount, 0);
     const rentDue = tenant.monthlyRent;
