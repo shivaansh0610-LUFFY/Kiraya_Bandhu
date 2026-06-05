@@ -1,7 +1,7 @@
 import React from 'react';
-import { Phone, Edit3, Home } from 'lucide-react';
+import { Phone, Edit3, Trash2 } from 'lucide-react';
 
-export default function TenantCard({ tenant, onEdit, onSelect }) {
+export default function TenantCard({ tenant, onEdit, onDelete, onSelect }) {
   const { name, room, monthlyRent, phone } = tenant;
 
   return (
@@ -53,9 +53,22 @@ export default function TenantCard({ tenant, onEdit, onSelect }) {
             onEdit(tenant);
           }}
           className="w-10 h-10 rounded-xl bg-brand-primary/5 text-brand-primary flex items-center justify-center border border-brand-primary/10 transition-colors active:scale-95 cursor-pointer"
-          title="Edit/Delete"
+          title="Edit Details"
         >
           <Edit3 size={18} className="stroke-[2.2]" />
+        </button>
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(tenant.id, name);
+          }}
+          className="w-10 h-10 rounded-xl bg-red-50 hover:bg-red-100/70 text-brand-pending flex items-center justify-center border border-red-200/60 transition-colors active:scale-95 cursor-pointer"
+          title="Delete Tenant"
+          aria-label={`Delete ${name}`}
+        >
+          <Trash2 size={18} className="stroke-[2.2]" />
         </button>
       </div>
 

@@ -96,6 +96,19 @@ export default function Tenants({ onSelectTenant }) {
     }
   };
 
+  const handleDeleteTenant = (tenantId, tenantName) => {
+    const confirmDelete = window.confirm(
+      `Kya aap sach me ${tenantName} ko hatana chahte hain?\n(Unki history safe rahegi.)`
+    );
+
+    if (confirmDelete) {
+      const deleted = deleteTenant(tenantId);
+      if (deleted) {
+        setTenants(getTenants());
+      }
+    }
+  };
+
   return (
     <div className="flex-1 pb-24 px-4 pt-4 overflow-y-auto relative">
       
@@ -141,6 +154,7 @@ export default function Tenants({ onSelectTenant }) {
               key={tenant.id}
               tenant={tenant}
               onEdit={openModal}
+              onDelete={handleDeleteTenant}
               onSelect={onSelectTenant}
             />
           ))}
