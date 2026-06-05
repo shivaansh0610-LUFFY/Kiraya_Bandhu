@@ -26,7 +26,7 @@ export default function Electricity() {
     if (monthsList.includes(currentMonthStr)) {
       setSelectedMonth(currentMonthStr);
     } else if (monthsList.length > 0) {
-      setSelectedMonth(monthsList[12]);
+      setSelectedMonth(monthsList[0]);
     }
     setRate(getElectricityRate());
   }, []);
@@ -270,7 +270,7 @@ export default function Electricity() {
                     onClick={() => handleTogglePaid(r.tenantId)}
                     className={`min-h-[36px] px-3.5 rounded-xl text-xs font-bold transition-all ${
                       r.paid
-                        ? 'bg-emerald-550 text-white shadow-sm shadow-emerald-500/10'
+                        ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/10'
                         : 'bg-stone-100 border border-stone-200 hover:bg-stone-200 text-stone-600 active:scale-95'
                     }`}
                   >

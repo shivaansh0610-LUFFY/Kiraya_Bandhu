@@ -374,13 +374,15 @@ export const getMonthlySummary = (monthStr) => {
 
 export const getRecentMonthsList = () => {
   const months = [];
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth(); // 0-indexed
   
-  // Generate months from Dec 2027 down to Jan 2025 (3 years range)
-  for (let year = 2027; year >= 2025; year--) {
-    for (let month = 12; month >= 1; month--) {
-      const monthStr = String(month).padStart(2, '0');
-      months.push(`${year}-${monthStr}`);
-    }
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(currentYear, currentMonth - i, 1);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    months.push(`${y}-${m}`);
   }
   
   return months;

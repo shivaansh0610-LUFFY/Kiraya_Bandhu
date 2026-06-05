@@ -20,7 +20,7 @@ export default function MonthlyReport() {
     if (monthsList.includes(currentMonthStr)) {
       setSelectedMonth(currentMonthStr);
     } else if (monthsList.length > 0) {
-      setSelectedMonth(monthsList[12]);
+      setSelectedMonth(monthsList[0]);
     }
   }, []);
 

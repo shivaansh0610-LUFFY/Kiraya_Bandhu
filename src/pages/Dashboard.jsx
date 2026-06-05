@@ -21,7 +21,7 @@ export default function Dashboard({ onRecordPaymentRedirect }) {
     if (list.includes(currentMonthStr)) {
       setSelectedMonth(currentMonthStr);
     } else if (list.length > 0) {
-      setSelectedMonth(list[12]); // Fallback to middle item (current month)
+      setSelectedMonth(list[0]); // Fallback to current month
     }
   }, []);
 
