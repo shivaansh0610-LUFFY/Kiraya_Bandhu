@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { getMonthlySummary, getMonthlyStatus, getHindiMonthName, getRecentMonthsList } from '../utils/storage';
-import SummaryCard from '../components/SummaryCard';
-import { ChevronRight, CheckCircle2, XCircle, Calendar, Zap } from 'lucide-react';
+import { getMonthlyStatus, getHindiMonthName, getRecentMonthsList } from '../utils/storage';
+import { ChevronRight, CheckCircle2, XCircle, Calendar } from 'lucide-react';
 
 export default function Dashboard({ onRecordPaymentRedirect }) {
   const [months, setMonths] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState('');
-  const [summary, setSummary] = useState({});
   const [statuses, setStatuses] = useState([]);
 
   // Load months list on mount
@@ -25,27 +23,22 @@ export default function Dashboard({ onRecordPaymentRedirect }) {
     }
   }, []);
 
-  // Fetch summaries whenever selected month changes
+  // Fetch statuses whenever selected month changes
   useEffect(() => {
     if (selectedMonth) {
-      setSummary(getMonthlySummary(selectedMonth));
       setStatuses(getMonthlyStatus(selectedMonth));
     }
   }, [selectedMonth]);
 
   // Filter logic:
-  // - A tenant goes to "Abhi tak nahi diya" (Pending) if they have unpaid rent (status === 'unpaid') OR if they have unpaid electricity.
-  // - A tenant goes to "De diya" (Paid/Partial) if they have paid rent (status === 'paid' or 'partial') AND their electricity (if any) is paid.
+  // - "Abhi Tak Nahi Diya" (unpaid or partially paid)
+  // - "De Diya" (fully paid)
   const unpaidTenants = statuses.filter(item => {
-    const isRentUnpaid = item.status === 'unpaid';
-    const isElectricityUnpaid = item.electricityBill > 0 && !item.electricityPaid;
-    return isRentUnpaid || isElectricityUnpaid;
+    return item.status === 'unpaid' || item.status === 'partial';
   });
 
-  const paidOrPartialTenants = statuses.filter(item => {
-    const isRentUnpaid = item.status === 'unpaid';
-    const isElectricityUnpaid = item.electricityBill > 0 && !item.electricityPaid;
-    return !isRentUnpaid && !isElectricityUnpaid;
+  const paidTenants = statuses.filter(item => {
+    return item.status === 'paid';
   });
 
   return (
@@ -71,9 +64,6 @@ export default function Dashboard({ onRecordPaymentRedirect }) {
         </div>
       </div>
 
-      {/* Big Summary Card (Rent + Electricity) */}
-      <SummaryCard summary={summary} />
-
       {/* Unpaid List (Abhi tak nahi diya) */}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-3 px-1">
@@ -88,13 +78,12 @@ export default function Dashboard({ onRecordPaymentRedirect }) {
 
         {unpaidTenants.length === 0 ? (
           <div className="bg-emerald-50 border border-emerald-100 text-emerald-850 rounded-2xl p-4 text-center text-sm font-bold shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
-            Sabhi tenants ne rent aur electricity bill de diya hai! 🎉
+            Sabhi tenants ne rent de diya hai! 🎉
           </div>
         ) : (
           <div className="space-y-3">
             {unpaidTenants.map((item) => {
-              const isRentUnpaid = item.status === 'unpaid';
-              const isElecUnpaid = item.electricityBill > 0 && !item.electricityPaid;
+              const dueAmount = item.status === 'partial' ? item.balance : item.rentDue;
 
               return (
                 <button
@@ -109,22 +98,7 @@ export default function Dashboard({ onRecordPaymentRedirect }) {
                     <div>
                       <h4 className="font-bold text-stone-900 text-base">{item.tenant.name}</h4>
                       <div className="flex flex-col gap-0.5 text-xs text-stone-500 font-semibold mt-0.5">
-                        {isRentUnpaid && (
-                          <span>Rent Due: ₹{Number(item.rentDue).toLocaleString('en-IN')}</span>
-                        )}
-                        {!isRentUnpaid && item.status === 'partial' && (
-                          <span className="text-orange-600">Rent Paid: ₹{item.amountPaid} / ₹{item.rentDue}</span>
-                        )}
-                        {!isRentUnpaid && item.status === 'paid' && (
-                          <span className="text-emerald-600">Rent: Paid (पूरा मिला)</span>
-                        )}
-                        
-                        {isElecUnpaid && (
-                          <span className="flex items-center gap-1 text-brand-primary font-bold animate-pulse-subtle">
-                            <Zap size={13} className="fill-brand-primary" />
-                            <span>Bijli Pending: ₹{item.electricityBill}</span>
-                          </span>
-                        )}
+                        <span>Rent Due: ₹{Number(dueAmount).toLocaleString('en-IN')}</span>
                       </div>
                     </div>
                   </div>
@@ -140,27 +114,29 @@ export default function Dashboard({ onRecordPaymentRedirect }) {
         )}
       </div>
 
-      {/* Paid/Partial List (De diya) */}
+      {/* Paid List (De diya) */}
       <div>
         <div className="flex items-center gap-2 mb-3 px-1">
           <CheckCircle2 size={18} className="text-brand-success stroke-[2.5]" />
           <h3 className="font-bold text-base text-stone-850">
             De Diya (दे दिया)
             <span className="ml-2 text-xs bg-green-150 text-brand-success px-2.5 py-0.5 rounded-full font-bold">
-              {paidOrPartialTenants.length}
+              {paidTenants.length}
             </span>
           </h3>
         </div>
 
-        {paidOrPartialTenants.length === 0 ? (
+        {paidTenants.length === 0 ? (
           <div className="bg-white border border-stone-200 text-stone-500 rounded-2xl p-5 text-center text-sm shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
-            Abhi tak kisi ne full payment nahi diya.
+            Abhi tak kisi ne rent payment nahi diya.
           </div>
         ) : (
           <div className="space-y-3">
-            {paidOrPartialTenants.map((item) => {
-              const isPartial = item.status === 'partial';
-              
+            {paidTenants.map((item) => {
+              const lastPayment = item.payments && item.payments.length > 0 ? item.payments[item.payments.length - 1] : null;
+              const paymentMode = lastPayment ? lastPayment.note : 'Cash';
+              const paymentDate = lastPayment ? lastPayment.date : '';
+
               return (
                 <div
                   key={item.tenant.id}
@@ -173,36 +149,16 @@ export default function Dashboard({ onRecordPaymentRedirect }) {
                     <div>
                       <h4 className="font-bold text-stone-900 text-base">{item.tenant.name}</h4>
                       <div className="flex flex-col gap-0.5 text-xs text-stone-500 font-semibold mt-0.5">
-                        <span>Rent: ₹{Number(item.rentDue).toLocaleString('en-IN')}</span>
-                        {item.electricityBill > 0 && (
-                          <span className="text-[10px] text-stone-400 flex items-center gap-0.5">
-                            ⚡ Electricity: ₹{item.electricityBill} (Paid)
-                          </span>
-                        )}
+                        <span>Mode: {paymentMode}</span>
+                        {paymentDate && <span>Date: {paymentDate}</span>}
                       </div>
                     </div>
                   </div>
                   
                   <div>
-                    {isPartial ? (
-                      <div className="flex flex-col items-end">
-                        <span className="text-xs bg-orange-100 text-brand-primary px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider mb-0.5">
-                          Partial
-                        </span>
-                        <span className="text-xs text-stone-500 font-semibold">
-                          Paid: ₹{item.amountPaid}
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-end">
-                        <span className="text-xs bg-emerald-100 text-brand-success px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider mb-0.5">
-                          Paid
-                        </span>
-                        <span className="text-xs text-stone-400 font-medium">
-                          Mila: ₹{item.amountPaid}
-                        </span>
-                      </div>
-                    )}
+                    <span className="text-xs bg-emerald-100 text-brand-success px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                      PAID
+                    </span>
                   </div>
                 </div>
               );
