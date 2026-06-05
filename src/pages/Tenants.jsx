@@ -3,7 +3,7 @@ import { getTenants, saveTenant, deleteTenant } from '../utils/storage';
 import TenantCard from '../components/TenantCard';
 import { UserPlus, X, Trash2, Save, Lightbulb } from 'lucide-react';
 
-export default function Tenants() {
+export default function Tenants({ onSelectTenant }) {
   const [tenants, setTenants] = useState([]);
   const [editingTenant, setEditingTenant] = useState(null);
   
@@ -141,6 +141,7 @@ export default function Tenants() {
               key={tenant.id}
               tenant={tenant}
               onEdit={openModal}
+              onSelect={onSelectTenant}
             />
           ))}
         </div>

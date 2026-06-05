@@ -6,10 +6,13 @@ import Tenants from './pages/Tenants';
 import RecordPayment from './pages/RecordPayment';
 import Electricity from './pages/Electricity';
 import MonthlyReport from './pages/MonthlyReport';
+import TenantDetail from './pages/TenantDetail';
 import { Heart, Building2 } from 'lucide-react';
 
 export default function App() {
   const [page, setPage] = useState('dashboard');
+  const [prevPage, setPrevPage] = useState('dashboard');
+  const [selectedTenantId, setSelectedTenantId] = useState('');
   const [tenantsCount, setTenantsCount] = useState(0);
   const [preSelectedTenantId, setPreSelectedTenantId] = useState('');
   const [preSelectedMonth, setPreSelectedMonth] = useState('');
@@ -34,6 +37,12 @@ export default function App() {
     setPreSelectedTenantId(tenantId);
     setPreSelectedMonth(monthStr || '');
     setPage('record-payment');
+  };
+
+  const handleSelectTenantDetail = (tenantId) => {
+    setSelectedTenantId(tenantId);
+    setPrevPage(page);
+    setPage('tenant-detail');
   };
 
   const handlePaymentRecorded = (targetPage = 'dashboard') => {
@@ -203,10 +212,11 @@ export default function App() {
         {page === 'dashboard' && (
           <Dashboard 
             onRecordPaymentRedirect={handleRecordPaymentRedirect} 
+            onSelectTenant={handleSelectTenantDetail}
           />
         )}
         {page === 'tenants' && (
-          <Tenants />
+          <Tenants onSelectTenant={handleSelectTenantDetail} />
         )}
         {page === 'record-payment' && (
           <RecordPayment 
@@ -220,6 +230,19 @@ export default function App() {
         )}
         {page === 'report' && (
           <MonthlyReport />
+        )}
+        {page === 'tenant-detail' && (
+          <TenantDetail 
+            tenantId={selectedTenantId}
+            onBack={() => setPage(prevPage)}
+            onRecordPayment={(tenantId) => {
+              setPreSelectedTenantId(tenantId);
+              const now = new Date();
+              const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+              setPreSelectedMonth(currentMonthStr);
+              setPage('record-payment');
+            }}
+          />
         )}
       </main>
 

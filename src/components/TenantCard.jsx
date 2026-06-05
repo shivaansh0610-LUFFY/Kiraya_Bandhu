@@ -1,12 +1,12 @@
 import React from 'react';
 import { Phone, Edit3, Home } from 'lucide-react';
 
-export default function TenantCard({ tenant, onEdit }) {
-  const { name, room, monthlyRent, phone, joinDate } = tenant;
+export default function TenantCard({ tenant, onEdit, onSelect }) {
+  const { name, room, monthlyRent, phone } = tenant;
 
   return (
     <div 
-      onClick={() => onEdit(tenant)}
+      onClick={() => onSelect(tenant.id)}
       className="bg-white rounded-2xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.08)] border border-stone-100 flex items-center justify-between gap-4 transition-all duration-200 hover:border-brand-primary/20 active:scale-[0.98] cursor-pointer"
     >
       
@@ -20,7 +20,7 @@ export default function TenantCard({ tenant, onEdit }) {
 
         {/* Tenant Info */}
         <div className="min-w-0">
-          <h4 className="text-stone-900 font-semibold text-base truncate mb-0.5">{name}</h4>
+          <h4 className="text-stone-900 font-semibold text-base truncate mb-0.5 hover:text-brand-primary transition-colors">{name}</h4>
           <div className="flex items-center gap-3 text-xs text-stone-500 font-medium">
             <span>₹{Number(monthlyRent).toLocaleString('en-IN')}/mo</span>
             {phone && (
@@ -46,12 +46,17 @@ export default function TenantCard({ tenant, onEdit }) {
           </a>
         )}
         
-        <div
-          className="w-10 h-10 rounded-xl bg-brand-primary/5 text-brand-primary flex items-center justify-center border border-brand-primary/10 transition-colors"
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(tenant);
+          }}
+          className="w-10 h-10 rounded-xl bg-brand-primary/5 text-brand-primary flex items-center justify-center border border-brand-primary/10 transition-colors active:scale-95 cursor-pointer"
           title="Edit/Delete"
         >
           <Edit3 size={18} className="stroke-[2.2]" />
-        </div>
+        </button>
       </div>
 
     </div>
