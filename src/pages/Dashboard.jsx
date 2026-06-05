@@ -24,11 +24,11 @@ export default function Dashboard({ onRecordPaymentRedirect, onSelectTenant }) {
   // - "Abhi Tak Nahi Diya" (unpaid or partially paid)
   // - "De Diya" (fully paid)
   const unpaidTenants = statuses.filter(item => {
-    return item.status === 'unpaid' || item.status === 'partial';
+    return !item.tenant.deleted && (item.status === 'unpaid' || item.status === 'partial');
   });
 
   const paidTenants = statuses.filter(item => {
-    return item.status === 'paid';
+    return !item.tenant.deleted && item.status === 'paid';
   });
 
   // Helper to format date as DD/MM/YYYY

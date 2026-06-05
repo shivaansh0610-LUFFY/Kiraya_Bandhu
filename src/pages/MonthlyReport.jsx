@@ -123,7 +123,7 @@ export default function MonthlyReport({ onRecordPayment, onSelectTenant }) {
                   : 'border-transparent text-stone-400'
               }`}
             >
-              Pending ({monthlyStatus.filter(item => item.totalPendingAmount > 0).length})
+              Pending ({monthlyStatus.filter(item => !item.tenant.deleted && item.totalPendingAmount > 0).length})
             </button>
             <button
               onClick={() => setStatusTab('paid')}
@@ -133,18 +133,18 @@ export default function MonthlyReport({ onRecordPayment, onSelectTenant }) {
                   : 'border-transparent text-stone-400'
               }`}
             >
-              Paid ({monthlyStatus.filter(item => item.totalPendingAmount === 0).length})
+              Paid ({monthlyStatus.filter(item => !item.tenant.deleted && item.totalPendingAmount === 0).length})
             </button>
           </div>
 
           {statusTab === 'pending' ? (
-            monthlyStatus.filter(item => item.totalPendingAmount > 0).length === 0 ? (
+            monthlyStatus.filter(item => !item.tenant.deleted && item.totalPendingAmount > 0).length === 0 ? (
               <div className="text-center py-4 text-xs font-semibold text-emerald-600">
                 🎉 Sab ne de diya! Koi payment pending nahi hai.
               </div>
             ) : (
               <div className="space-y-2.5">
-                {monthlyStatus.filter(item => item.totalPendingAmount > 0).map((item) => (
+                {monthlyStatus.filter(item => !item.tenant.deleted && item.totalPendingAmount > 0).map((item) => (
                   <div
                     key={item.tenant.id}
                     className="flex justify-between items-center bg-stone-50/50 hover:bg-stone-50 border border-stone-100/50 rounded-xl p-3 transition-colors"
@@ -185,13 +185,13 @@ export default function MonthlyReport({ onRecordPayment, onSelectTenant }) {
               </div>
             )
           ) : (
-            monthlyStatus.filter(item => item.totalPendingAmount === 0).length === 0 ? (
+            monthlyStatus.filter(item => !item.tenant.deleted && item.totalPendingAmount === 0).length === 0 ? (
               <div className="text-center py-4 text-xs font-semibold text-stone-400">
                 Kisi ne bhi abhi tak pura payment nahi diya.
               </div>
             ) : (
               <div className="space-y-2.5">
-                {monthlyStatus.filter(item => item.totalPendingAmount === 0).map((item) => (
+                {monthlyStatus.filter(item => !item.tenant.deleted && item.totalPendingAmount === 0).map((item) => (
                   <div
                     key={item.tenant.id}
                     onClick={() => onSelectTenant && onSelectTenant(item.tenant.id)}
