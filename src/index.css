@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Poppins', system-ui, -apple-system, sans-serif;
+  
+  --color-brand-primary: #F97316;
+  --color-brand-success: #22C55E;
+  --color-brand-pending: #EF4444;
+  --color-brand-bg: #FFF7ED;
+  --color-brand-text: #1C1917;
+  
+  --shadow-custom: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Base resets & typography */
+html, body {
+  background-color: #FFF7ED;
+  color: #1C1917;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent auto-zooming on focus in iOS Safari */
+input, select, textarea, button {
+  font-size: 16px !important;
+}
+
+/* Desktop centering constraint for mobile-first app */
+.app-wrapper {
+  min-height: 100vh;
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  background-color: #FFF7ED;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 40px rgba(28, 25, 23, 0.08);
+  position: relative;
+}
+
+/* Subtle warm gradient for header */
+.header-gradient {
+  background: linear-gradient(135deg, #F97316, #EA580C);
+}
+
+/* Backdrop styles for modal <dialog> elements */
+dialog::backdrop {
+  background-color: rgba(28, 25, 23, 0.4);
+  backdrop-filter: blur(4px);
+  animation: backdrop-fade-in 0.2s ease-out;
+}
+
+dialog {
+  border: none;
+  border-radius: 16px; /* border-radius 16px */
+  background-color: #FFFFFF;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+@keyframes backdrop-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
