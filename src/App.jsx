@@ -3,10 +3,13 @@ import { getTenants, saveTenant } from './utils/storage';
 import BottomNav from './components/BottomNav';
 import Tenants from './pages/Tenants';
 import Dashboard from './pages/Dashboard';
+import RecordPayment from './pages/RecordPayment';
 
 export default function App() {
   const [page, setPage] = useState('dashboard');
   const [tenantsCount, setTenantsCount] = useState(0);
+  const [preSelectedTenantId, setPreSelectedTenantId] = useState('');
+  const [preSelectedMonth, setPreSelectedMonth] = useState('');
   
   const [welcomeName, setWelcomeName] = useState('');
   const [welcomeRoom, setWelcomeRoom] = useState('');
@@ -21,6 +24,19 @@ export default function App() {
   useEffect(() => {
     updateTenantsCount();
   }, [page]);
+
+  const handleRecordPaymentRedirect = (tenantId, monthStr) => {
+    setPreSelectedTenantId(tenantId);
+    setPreSelectedMonth(monthStr || '');
+    setPage('record-payment');
+  };
+
+  const handlePaymentRecorded = () => {
+    setPreSelectedTenantId('');
+    setPreSelectedMonth('');
+    setPage('dashboard');
+    updateTenantsCount();
+  };
 
   const handleWelcomeSubmit = (e) => {
     e.preventDefault();
@@ -66,8 +82,17 @@ export default function App() {
         <h1>Kiraya Bandhu</h1>
       </header>
       <main className="flex-1 p-4 bg-[#FFF7ED]">
-        {page === 'dashboard' && <Dashboard onRecordPaymentRedirect={() => setPage('record-payment')} />}
+        {page === 'dashboard' && (
+          <Dashboard onRecordPaymentRedirect={handleRecordPaymentRedirect} />
+        )}
         {page === 'tenants' && <Tenants />}
+        {page === 'record-payment' && (
+          <RecordPayment 
+            preSelectedTenantId={preSelectedTenantId}
+            preSelectedMonth={preSelectedMonth}
+            onPaymentRecorded={handlePaymentRecorded}
+          />
+        )}
       </main>
       <BottomNav currentPage={page} setPage={setPage} />
     </div>
